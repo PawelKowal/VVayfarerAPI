@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -15,7 +16,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Serialization;
 using VVayfarerApi.Data;
+using VVayfarerApi.Models;
 using VVayfarerApi.Services;
 
 namespace VVayfarerApi
@@ -41,9 +44,10 @@ namespace VVayfarerApi
 
             services.AddDbContextPool<VVayfarerDbContext>(opt => opt.UseMySql(Configuration["DefaultConnection:ConnectionString"]));
 
-            services.AddIdentity<IdentityUser, IdentityRole>(options =>
+            services.AddIdentity<UserModel, IdentityRole>(options =>
             {
                 options.Password.RequiredLength = 6;
+                options.User.RequireUniqueEmail = true;
             })
                 .AddEntityFrameworkStores<VVayfarerDbContext>()
                 .AddDefaultTokenProviders();
@@ -68,6 +72,12 @@ namespace VVayfarerApi
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))
                 };
             });
+
+            services.AddControllers().AddNewtonsoftJson(s => {
+                s.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            });
+
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.AddScoped<IUserService, UserService>();
 

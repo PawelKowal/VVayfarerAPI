@@ -1,25 +1,29 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using VVayfarerApi.Dtos;
 using VVayfarerApi.Models;
+using System.Drawing;
 
 namespace VVayfarerApi.Services
 {
     public class UserService : IUserService
     {
-        private UserManager<IdentityUser> _userManager;
+        private UserManager<UserModel> _userManager;
         private IConfiguration _configuration;
 
-        public UserService(UserManager<IdentityUser> userManager, IConfiguration configuration)
+        public UserService(UserManager<UserModel> userManager, IConfiguration configuration)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -35,15 +39,20 @@ namespace VVayfarerApi.Services
                     Message = "Confrim password doesn't match.",
                     IsSuccess = false,
                 };
-            }   
+            }
 
-            var identityUser = new IdentityUser
+            byte[] imageArray = System.IO.File.ReadAllBytes(@"./Models/defaultAvatar.png");
+            string base64ImageRepresentation = Convert.ToBase64String(imageArray);
+
+            var userModel = new UserModel
             {
                 Email = model.Email,
-                UserName = model.Email,
+                UserName = model.UserName,
+                Image = base64ImageRepresentation,
+                ProfileDescription = "",
             };
 
-            var result = await _userManager.CreateAsync(identityUser, model.Password);
+            var result = await _userManager.CreateAsync(userModel, model.Password);
 
             if (result.Succeeded)
             {
@@ -58,7 +67,7 @@ namespace VVayfarerApi.Services
             {
                 Message = "User did not create.",
                 IsSuccess = false,
-                Errors = result.Errors.Select(e => e.Description)
+                Errors = result.Errors.Select(e => e.Description),
             };
 
         }
@@ -110,6 +119,21 @@ namespace VVayfarerApi.Services
                 IsSuccess = true,
                 ExpireDate = token.ValidTo,
             };
+        }
+
+        public async Task UpdateUser(UserModel model)
+        {
+            await _userManager.UpdateAsync(model);
+        }
+
+        public async Task<UserModel> GetUserById(string Id)
+        {
+            return await _userManager.FindByIdAsync(Id);
+        }
+
+        public async Task<List<UserModel>> GetAllUsers()
+        {
+            return await _userManager.Users.ToListAsync();
         }
     }
 }

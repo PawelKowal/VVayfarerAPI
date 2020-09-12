@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using VVayfarerApi.Dtos;
 using VVayfarerApi.Models;
 
 namespace VVayfarerApi.Services
@@ -10,5 +11,8 @@ namespace VVayfarerApi.Services
     {
         Task<UserManagerResponse> RegisterUserAsync(RegisterModel model);
         Task<UserManagerResponse> LoginUserAsync(LoginModel model);
+        Task<UserModel> GetUserById(string Id);
+        Task<List<UserModel>> GetAllUsers();
+        Task UpdateUser(UserModel model);
     }
 }
