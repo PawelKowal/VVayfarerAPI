@@ -8,18 +8,17 @@ namespace VVayfarerApi.Models
 {
     public class RegisterModel
     {
-        [Required]
-        [StringLength(50)]
+        [Required(ErrorMessage = "Name is required.")]
+        [StringLength(50, ErrorMessage = "Your name must contain less than 50 characters.")]
         public string UserName { get; set; }
-        [Required]
-        [StringLength(50)]
+        [Required(ErrorMessage = "Email is required.")]
+        [StringLength(50, ErrorMessage = "Your email must contain less than 50 characters.")]
         [EmailAddress]
         public string Email { get; set; }
         [Required]
-        [StringLength(50, MinimumLength=6)]
+        [StringLength(50, ErrorMessage = "Your password must contain less than 50 characters.")]
         public string Password { get; set; }
-        [Required]
-        [StringLength(50, MinimumLength =6)]
+        [Compare(nameof(Password), ErrorMessage = "Passwords are not the same.")]
         public string ConfirmPassword { get; set; }
     }
 }

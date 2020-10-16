@@ -28,11 +28,22 @@ namespace VVayfarerApi.Controllers
 
         //GET api/user
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers()
+        public async Task<IActionResult> GetLoggedUser()
         {
-            var userItems = await _userService.GetAllUsers();
+            var authorizedUserId = User.FindFirst(ClaimTypes.NameIdentifier);
 
-            return Ok(_mapper.Map<IEnumerable<UserReadDto>>(userItems));
+            if (authorizedUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var userItem = await _userService.GetUserById(authorizedUserId.Value);
+            if (userItem != null)
+            {
+                return Ok(_mapper.Map<UserReadDto>(userItem));
+            }
+
+            return NotFound();
         }
 
         //GET api/user/{id}
@@ -48,9 +59,9 @@ namespace VVayfarerApi.Controllers
         }
 
         //PATCH api/user/{id}
-        [HttpPatch("{Id}")]
+        [HttpPatch]
         [Authorize]
-        public async Task<IActionResult> UserUpdate(string Id, JsonPatchDocument<UserUpdateDto> patchDoc)
+        public async Task<IActionResult> UserUpdate([FromQuery]string Id, [FromBody]JsonPatchDocument<UserUpdateDto> patchDoc)
         {
             var authorizedUserId = User.FindFirst(ClaimTypes.NameIdentifier);
             if (authorizedUserId.Value != Id)

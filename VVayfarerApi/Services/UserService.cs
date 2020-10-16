@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using VVayfarerApi.Dtos;
 using VVayfarerApi.Models;
 using System.Drawing;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace VVayfarerApi.Services
 {
@@ -31,15 +32,6 @@ namespace VVayfarerApi.Services
         public async Task<UserManagerResponse> RegisterUserAsync(RegisterModel model)
         {
             if (model == null) throw new NullReferenceException("Register model is null");
-
-            if (model.Password != model.ConfirmPassword)
-            {
-                return new UserManagerResponse
-                {
-                    Message = "Confrim password doesn't match.",
-                    IsSuccess = false,
-                };
-            }
 
             byte[] imageArray = System.IO.File.ReadAllBytes(@"./Models/defaultAvatar.png");
             string base64ImageRepresentation = Convert.ToBase64String(imageArray);
@@ -63,11 +55,18 @@ namespace VVayfarerApi.Services
                 };
             }
 
+            Dictionary<string, string[]> errors = new Dictionary<string, string[]>();
+
+            foreach (var error in result.Errors)
+            {
+                errors.Add(error.Code, new string[1] { error.Description });
+            }
+
             return new UserManagerResponse
             {
                 Message = "User did not create.",
                 IsSuccess = false,
-                Errors = result.Errors.Select(e => e.Description),
+                Errors = errors,
             };
 
         }

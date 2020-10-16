@@ -46,7 +46,6 @@ namespace VVayfarerApi
 
             services.AddIdentity<UserModel, IdentityRole>(options =>
             {
-                options.Password.RequiredLength = 6;
                 options.User.RequireUniqueEmail = true;
             })
                 .AddEntityFrameworkStores<VVayfarerDbContext>()

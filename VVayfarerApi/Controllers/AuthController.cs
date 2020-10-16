@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -36,7 +37,7 @@ namespace VVayfarerApi.Controllers
                 return BadRequest(result);
             }
 
-            return BadRequest("Some properties are not valid");
+            return BadRequest(ModelState);
         }
 
         // /api/auth/login

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,12 @@ namespace VVayfarerApi.Data
     {
         public VVayfarerDbContext(DbContextOptions options) : base(options)
         {
-
+            
+        }
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+            builder.Entity<UserModel>().Property(t => t.UserName).HasMaxLength(50);
         }
     }
 }
