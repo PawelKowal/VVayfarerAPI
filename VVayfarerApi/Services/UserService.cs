@@ -16,16 +16,19 @@ using VVayfarerApi.Dtos;
 using VVayfarerApi.Models;
 using System.Drawing;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using VVayfarerApi.Data;
 
 namespace VVayfarerApi.Services
 {
     public class UserService : IUserService
     {
+        private VVayfarerDbContext _context;
         private UserManager<UserModel> _userManager;
         private IConfiguration _configuration;
 
-        public UserService(UserManager<UserModel> userManager, IConfiguration configuration)
+        public UserService(VVayfarerDbContext context, UserManager<UserModel> userManager, IConfiguration configuration)
         {
+            _context = context;
             _userManager = userManager;
             _configuration = configuration;
         }
@@ -42,16 +45,30 @@ namespace VVayfarerApi.Services
                 UserName = model.UserName,
                 Image = base64ImageRepresentation,
                 ProfileDescription = "",
+                RefreshToken = null,
             };
 
             var result = await _userManager.CreateAsync(userModel, model.Password);
 
             if (result.Succeeded)
             {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+
+                var accessToken = generateAccessToken(user);
+
+                string accessTokenAsString = new JwtSecurityTokenHandler().WriteToken(accessToken);
+
+                var refreshToken = await generateRefreshToken(user);
+
+                userModel.RefreshToken = refreshToken;
+
+                await _userManager.UpdateAsync(userModel);
+
                 return new UserManagerResponse
                 {
-                    Message = "User created successfully!",
+                    Message = accessTokenAsString,
                     IsSuccess = true,
+                    RefreshToken = refreshToken.Token,
                 };
             }
 
@@ -95,28 +112,21 @@ namespace VVayfarerApi.Services
                 };
             }
 
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Email, model.Email),
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-            };
+            var accessToken = generateAccessToken(user);
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+            var refreshToken = await generateRefreshToken(user);
 
-            var token = new JwtSecurityToken(
-                issuer: _configuration["JWT:ValidIssuer"],
-                audience: _configuration["JWT:ValidAudience"],
-                claims: claims,
-                expires: DateTime.Now.AddDays(1),
-                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
+            user.RefreshToken = refreshToken;
 
-            string tokenAsString = new JwtSecurityTokenHandler().WriteToken(token);
+            await _userManager.UpdateAsync(user);
+
+            string accessTokenAsString = new JwtSecurityTokenHandler().WriteToken(accessToken);
 
             return new UserManagerResponse
             {
-                Message = tokenAsString,
+                Message = accessTokenAsString,
                 IsSuccess = true,
-                ExpireDate = token.ValidTo,
+                RefreshToken = refreshToken.Token,
             };
         }
 
@@ -133,6 +143,113 @@ namespace VVayfarerApi.Services
         public async Task<List<UserModel>> GetAllUsers()
         {
             return await _userManager.Users.ToListAsync();
+        }
+
+        public async Task<UserManagerResponse> RefreshTokenAsync(string token)
+        {
+            var user = _context.Users.SingleOrDefault(u => u.RefreshToken.Token == token);
+
+            if (user == null)
+            {
+                return new UserManagerResponse
+                {
+                    Message = "User not found.",
+                    IsSuccess = false,
+                };
+            }
+
+            var refreshToken = user.RefreshToken;
+
+            if (refreshToken.Expires < DateTime.Now) {
+                return new UserManagerResponse
+                {
+                    Message = "Refresh token is no longer valid.",
+                    IsSuccess = false,
+                };
+            }
+
+            if (refreshToken.Token != token)
+            {
+                return new UserManagerResponse
+                {
+                    Message = "Refresh token is not valid.",
+                    IsSuccess = false,
+                };
+            }
+
+            var newRefreshToken = await generateRefreshToken(user);
+
+            var newAccessToken = generateAccessToken(user);
+
+            user.RefreshToken = newRefreshToken;
+
+            await _userManager.UpdateAsync(user);
+
+            string accessTokenAsString = new JwtSecurityTokenHandler().WriteToken(newAccessToken);
+
+            return new UserManagerResponse
+            {
+                Message = accessTokenAsString,
+                IsSuccess = true,
+                RefreshToken = newRefreshToken.Token,
+            };
+        }
+
+        public async Task<UserManagerResponse> LogoutUserAsync(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+
+            if (user == null)
+            {
+                return new UserManagerResponse
+                {
+                    Message = "There is no user with that id.",
+                    IsSuccess = false,
+                };
+            }
+
+            user.RefreshToken = null;
+
+            await _userManager.UpdateAsync(user);
+
+            return new UserManagerResponse
+            {
+                Message = "User logged out.",
+                IsSuccess = true,
+            };
+        }
+
+        //helper methods
+
+        private JwtSecurityToken generateAccessToken(UserModel user)
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["JWT:ValidIssuer"],
+                audience: _configuration["JWT:ValidAudience"],
+                claims: claims,
+                expires: DateTime.Now.AddHours(1),
+                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
+
+            return token;
+        }
+
+        private async Task<RefreshTokenModel> generateRefreshToken(UserModel user)
+        {
+            var token = await _userManager.GenerateUserTokenAsync(user, "MyApp", "RefreshToken");
+
+            return new RefreshTokenModel
+            {
+                Token = token,
+                Expires = DateTime.Now.AddDays(7)
+            };
         }
     }
 }

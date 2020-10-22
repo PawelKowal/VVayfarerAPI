@@ -10,5 +10,6 @@ namespace VVayfarerApi.Models
     {
         public string Image { get; set; }
         public string ProfileDescription { get; set; }
+        public RefreshTokenModel RefreshToken { get; set; }
     }
 }

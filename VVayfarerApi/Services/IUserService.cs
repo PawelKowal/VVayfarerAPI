@@ -14,5 +14,7 @@ namespace VVayfarerApi.Services
         Task<UserModel> GetUserById(string Id);
         Task<List<UserModel>> GetAllUsers();
         Task UpdateUser(UserModel model);
+        Task<UserManagerResponse> RefreshTokenAsync(string token);
+        Task<UserManagerResponse> LogoutUserAsync(string id);
     }
 }

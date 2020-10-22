@@ -49,7 +49,8 @@ namespace VVayfarerApi
                 options.User.RequireUniqueEmail = true;
             })
                 .AddEntityFrameworkStores<VVayfarerDbContext>()
-                .AddDefaultTokenProviders();
+                .AddDefaultTokenProviders()
+                .AddTokenProvider("MyApp", typeof(DataProtectorTokenProvider<UserModel>));
 
             services.AddAuthentication(options =>
             {
@@ -68,7 +69,8 @@ namespace VVayfarerApi
                     ValidateAudience = true,
                     ValidAudience = Configuration["JWT:ValidAudience"],
                     ValidIssuer = Configuration["JWT:ValidIssuer"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"])),
+                    ClockSkew = TimeSpan.Zero
                 };
             });
 

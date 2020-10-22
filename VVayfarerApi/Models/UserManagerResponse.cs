@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ namespace VVayfarerApi.Models
         public string Message { get; set; }
         public bool IsSuccess { get; set; }
         public Dictionary<string, string[]> Errors { get; set; }
-        public DateTime? ExpireDate { get; set; }
+        [JsonIgnore]
+        public string RefreshToken { get; set; }
     }
 }
