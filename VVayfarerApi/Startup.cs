@@ -37,9 +37,10 @@ namespace VVayfarerApi
         {
             services.AddCors(o => o.AddPolicy("AllowOrigin", builder =>
             {
-                builder.WithOrigins("http://localhost:3000")
+                builder.SetIsOriginAllowed(origin => true)
                        .AllowAnyMethod()
-                       .AllowAnyHeader();
+                       .AllowAnyHeader()
+                       .AllowCredentials();
             }));
 
             services.AddDbContextPool<VVayfarerDbContext>(opt => opt.UseMySql(Configuration["DefaultConnection:ConnectionString"]));

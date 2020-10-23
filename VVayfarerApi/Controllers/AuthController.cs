@@ -66,7 +66,7 @@ namespace VVayfarerApi.Controllers
         }
 
         // /api/auth/refresh-token
-        [HttpPost("Refresh-token")]
+        [HttpGet("Refresh-token")]
         public async Task<IActionResult> RefreshTokenAsync()
         {
             if (ModelState.IsValid)
@@ -117,7 +117,9 @@ namespace VVayfarerApi.Controllers
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Expires = DateTime.UtcNow.AddDays(7)
+                Expires = DateTime.UtcNow.AddDays(7),
+                SameSite = SameSiteMode.Lax,
+                Secure = true
             };
             Response.Cookies.Append("refreshToken", token, cookieOptions);
         }
