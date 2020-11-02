@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using VVayfarerApi.Dtos;
 using AutoMapper;
-using VVayfarerApi.Models;
+using VVayfarerApi.Entities;
 
 namespace VVayfarerApi.Profiles
 {
@@ -12,9 +12,9 @@ namespace VVayfarerApi.Profiles
     {
         public UserProfile()
         {
-            CreateMap<UserModel, UserReadDto>();
-            CreateMap<UserUpdateDto, UserModel>();
-            CreateMap<UserModel, UserUpdateDto>();
+            CreateMap<User, UserReadDto>();
+            CreateMap<UserUpdateDto, User>();
+            CreateMap<User, UserUpdateDto>();
         }
     }
 }

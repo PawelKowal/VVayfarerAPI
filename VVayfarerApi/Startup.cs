@@ -18,8 +18,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Serialization;
 using VVayfarerApi.Data;
-using VVayfarerApi.Models;
-using VVayfarerApi.Services;
+using VVayfarerApi.Entities;
+using VVayfarerApi.Repositories;
 
 namespace VVayfarerApi
 {
@@ -45,13 +45,13 @@ namespace VVayfarerApi
 
             services.AddDbContextPool<VVayfarerDbContext>(opt => opt.UseMySql(Configuration["DefaultConnection:ConnectionString"]));
 
-            services.AddIdentity<UserModel, IdentityRole>(options =>
+            services.AddIdentity<User, IdentityRole<Guid>>(options =>
             {
                 options.User.RequireUniqueEmail = true;
             })
                 .AddEntityFrameworkStores<VVayfarerDbContext>()
                 .AddDefaultTokenProviders()
-                .AddTokenProvider("MyApp", typeof(DataProtectorTokenProvider<UserModel>));
+                .AddTokenProvider("MyApp", typeof(DataProtectorTokenProvider<User>));
 
             services.AddAuthentication(options =>
             {
@@ -77,11 +77,12 @@ namespace VVayfarerApi
 
             services.AddControllers().AddNewtonsoftJson(s => {
                 s.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                s.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
             });
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.AddControllers();
         }

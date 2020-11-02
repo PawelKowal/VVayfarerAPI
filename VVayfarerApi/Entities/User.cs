@@ -4,12 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace VVayfarerApi.Models
+namespace VVayfarerApi.Entities
 {
-    public class UserModel: IdentityUser
+    public class User: IdentityUser<Guid>
     {
         public string Image { get; set; }
         public string ProfileDescription { get; set; }
-        public RefreshTokenModel RefreshToken { get; set; }
+        public RefreshToken RefreshToken { get; set; }
+        public List<Entity> Entities { get; set; }
+        public List<Reaction> Reactions { get; set; }
+        
     }
 }

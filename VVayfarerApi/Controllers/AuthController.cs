@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using VVayfarerApi.Data;
 using VVayfarerApi.Models;
-using VVayfarerApi.Services;
+using VVayfarerApi.Repositories;
 
 namespace VVayfarerApi.Controllers
 {
@@ -16,11 +17,11 @@ namespace VVayfarerApi.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private IUserService _userService;
+        private IUnitOfWork _uow;
 
-        public AuthController(IUserService userService)
+        public AuthController(IUnitOfWork uow)
         {
-            _userService = userService;
+            _uow = uow;
         }
 
         // /api/auth/register
@@ -29,11 +30,11 @@ namespace VVayfarerApi.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _userService.RegisterUserAsync(model);
+                var result = await _uow.UserRepository.RegisterUserAsync(model);
 
                 if (result.IsSuccess)
                 {
-                    setTokenCookie(result.RefreshToken);
+                    SetTokenCookie(result.RefreshToken);
 
                     return Ok(result);
                 }
@@ -50,11 +51,11 @@ namespace VVayfarerApi.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _userService.LoginUserAsync(model);
+                var result = await _uow.UserRepository.LoginUserAsync(model);
 
                 if (result.IsSuccess)
                 {
-                    setTokenCookie(result.RefreshToken);
+                    SetTokenCookie(result.RefreshToken);
 
                     return Ok(result);
                 }
@@ -73,11 +74,11 @@ namespace VVayfarerApi.Controllers
             {
                 var refreshToken = Request.Cookies["refreshToken"];
 
-                var result = await _userService.RefreshTokenAsync(refreshToken);
+                var result = await _uow.UserRepository.RefreshTokenAsync(refreshToken);
 
                 if (result.IsSuccess)
                 {
-                    setTokenCookie(result.RefreshToken);
+                    SetTokenCookie(result.RefreshToken);
 
                     return Ok(result);
                 }
@@ -100,7 +101,7 @@ namespace VVayfarerApi.Controllers
                 return Unauthorized();
             }
 
-            var result = await _userService.LogoutUserAsync(authorizedUserId.Value);
+            var result = await _uow.UserRepository.LogoutUserAsync(authorizedUserId.Value);
 
             if (result.IsSuccess)
             {
@@ -112,7 +113,7 @@ namespace VVayfarerApi.Controllers
 
         //helper methods
 
-        private void setTokenCookie(string token)
+        private void SetTokenCookie(string token)
         {
             var cookieOptions = new CookieOptions
             {

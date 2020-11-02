@@ -5,10 +5,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace VVayfarerApi.Models
+namespace VVayfarerApi.Entities
 {
     [Owned]
-    public class RefreshTokenModel
+    public class RefreshToken
     {
         [Key]
         public int Id { get; set; }

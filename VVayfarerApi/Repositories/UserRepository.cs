@@ -14,19 +14,20 @@ using System.Threading;
 using System.Threading.Tasks;
 using VVayfarerApi.Dtos;
 using VVayfarerApi.Models;
+using VVayfarerApi.Entities;
 using System.Drawing;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using VVayfarerApi.Data;
 
-namespace VVayfarerApi.Services
+namespace VVayfarerApi.Repositories
 {
-    public class UserService : IUserService
+    public class UserRepository : IUserRepository
     {
         private VVayfarerDbContext _context;
-        private UserManager<UserModel> _userManager;
+        private UserManager<User> _userManager;
         private IConfiguration _configuration;
 
-        public UserService(VVayfarerDbContext context, UserManager<UserModel> userManager, IConfiguration configuration)
+        public UserRepository(VVayfarerDbContext context, UserManager<User> userManager, IConfiguration configuration)
         {
             _context = context;
             _userManager = userManager;
@@ -39,7 +40,7 @@ namespace VVayfarerApi.Services
             byte[] imageArray = System.IO.File.ReadAllBytes(@"./Models/defaultAvatar.png");
             string base64ImageRepresentation = Convert.ToBase64String(imageArray);
 
-            var userModel = new UserModel
+            var userModel = new User
             {
                 Email = model.Email,
                 UserName = model.UserName,
@@ -54,11 +55,11 @@ namespace VVayfarerApi.Services
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
 
-                var accessToken = generateAccessToken(user);
+                var accessToken = GenerateAccessToken(user);
 
                 string accessTokenAsString = new JwtSecurityTokenHandler().WriteToken(accessToken);
 
-                var refreshToken = await generateRefreshToken(user);
+                var refreshToken = await GenerateRefreshToken(user);
 
                 userModel.RefreshToken = refreshToken;
 
@@ -112,9 +113,9 @@ namespace VVayfarerApi.Services
                 };
             }
 
-            var accessToken = generateAccessToken(user);
+            var accessToken = GenerateAccessToken(user);
 
-            var refreshToken = await generateRefreshToken(user);
+            var refreshToken = await GenerateRefreshToken(user);
 
             user.RefreshToken = refreshToken;
 
@@ -130,19 +131,21 @@ namespace VVayfarerApi.Services
             };
         }
 
-        public async Task UpdateUser(UserModel model)
+        public Task UpdateUser(User model)
         {
-            await _userManager.UpdateAsync(model);
+            _userManager.UpdateAsync(model);
+
+            return Task.CompletedTask;
         }
 
-        public async Task<UserModel> GetUserById(string Id)
+        public Task<User> GetUserById(string Id)
         {
-            return await _userManager.FindByIdAsync(Id);
+            return _userManager.FindByIdAsync(Id);
         }
 
-        public async Task<List<UserModel>> GetAllUsers()
+        public Task<List<User>> GetAllUsers()
         {
-            return await _userManager.Users.ToListAsync();
+            return _userManager.Users.ToListAsync();
         }
 
         public async Task<UserManagerResponse> RefreshTokenAsync(string token)
@@ -177,9 +180,9 @@ namespace VVayfarerApi.Services
                 };
             }
 
-            var newRefreshToken = await generateRefreshToken(user);
+            var newRefreshToken = await GenerateRefreshToken(user);
 
-            var newAccessToken = generateAccessToken(user);
+            var newAccessToken = GenerateAccessToken(user);
 
             user.RefreshToken = newRefreshToken;
 
@@ -221,12 +224,12 @@ namespace VVayfarerApi.Services
 
         //helper methods
 
-        private JwtSecurityToken generateAccessToken(UserModel user)
+        private JwtSecurityToken GenerateAccessToken(User user)
         {
             var claims = new[]
             {
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
@@ -235,17 +238,17 @@ namespace VVayfarerApi.Services
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],
                 claims: claims,
-                expires: DateTime.Now.AddSeconds(30),
+                expires: DateTime.Now.AddDays(30),
                 signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
 
             return token;
         }
 
-        private async Task<RefreshTokenModel> generateRefreshToken(UserModel user)
+        private async Task<RefreshToken> GenerateRefreshToken(User user)
         {
             var token = await _userManager.GenerateUserTokenAsync(user, "MyApp", "RefreshToken");
 
-            return new RefreshTokenModel
+            return new RefreshToken
             {
                 Token = token,
                 Expires = DateTime.Now.AddDays(7)

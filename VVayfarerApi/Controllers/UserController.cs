@@ -8,9 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using VVayfarerApi.Data;
 using VVayfarerApi.Dtos;
-using VVayfarerApi.Models;
-using VVayfarerApi.Services;
 
 namespace VVayfarerApi.Controllers
 {
@@ -18,11 +17,11 @@ namespace VVayfarerApi.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
-        public UserController(IUserService userService, IMapper mapper)
+        public UserController(IUnitOfWork uow, IMapper mapper)
         {
-            _userService = userService;
+            _uow = uow;
             _mapper = mapper;
         }
 
@@ -37,7 +36,7 @@ namespace VVayfarerApi.Controllers
                 return Unauthorized();
             }
 
-            var userItem = await _userService.GetUserById(authorizedUserId.Value);
+            var userItem = await _uow.UserRepository.GetUserById(authorizedUserId.Value);
             if (userItem != null)
             {
                 return Ok(_mapper.Map<UserReadDto>(userItem));
@@ -50,7 +49,7 @@ namespace VVayfarerApi.Controllers
         [HttpGet("{Id}", Name = "GetUserById")]
         public async Task<IActionResult> GetUserById(string Id)
         {
-            var userItem = await _userService.GetUserById(Id);
+            var userItem = await _uow.UserRepository.GetUserById(Id);
             if (userItem != null)
             {
                 return Ok(_mapper.Map<UserReadDto>(userItem));
@@ -61,15 +60,16 @@ namespace VVayfarerApi.Controllers
         //PATCH api/user/{id}
         [HttpPatch]
         [Authorize]
-        public async Task<IActionResult> UserUpdate([FromQuery]string Id, [FromBody]JsonPatchDocument<UserUpdateDto> patchDoc)
+        public async Task<IActionResult> UserUpdate([FromQuery] string Id, [FromBody] JsonPatchDocument<UserUpdateDto> patchDoc)
         {
             var authorizedUserId = User.FindFirst(ClaimTypes.NameIdentifier);
+
             if (authorizedUserId.Value != Id)
             {
                 return Unauthorized();
             }
 
-            var userModelFromRepo = await _userService.GetUserById(Id);
+            var userModelFromRepo = await _uow.UserRepository.GetUserById(Id);
             if (userModelFromRepo == null)
             {
                 return NotFound();
@@ -85,9 +85,20 @@ namespace VVayfarerApi.Controllers
 
             _mapper.Map(userToPatch, userModelFromRepo);
 
-            await _userService.UpdateUser(userModelFromRepo);
+            await _uow.UserRepository.UpdateUser(userModelFromRepo);
+
+            _uow.SaveChanges();
 
             return NoContent();
+        }
+
+        //GET /api/user/all
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var userItems = await _uow.UserRepository.GetAllUsers();
+
+            return Ok(_mapper.Map<IEnumerable<UserReadDto>>(userItems));
         }
     }
 }
