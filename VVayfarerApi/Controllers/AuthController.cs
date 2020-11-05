@@ -90,7 +90,7 @@ namespace VVayfarerApi.Controllers
         }
 
         // /api/auth/logout
-        [HttpPost("Logout")]
+        [HttpGet("Logout")]
         [Authorize]
         public async Task<IActionResult> LogoutAsync()
         {

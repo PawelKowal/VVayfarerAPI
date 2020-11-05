@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace VVayfarerApi.Entities
 {
-    [Owned]
     public class Post
     { 
         [Key]

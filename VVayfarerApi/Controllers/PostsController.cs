@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VVayfarerApi.Data;
 using VVayfarerApi.Dtos;
+using VVayfarerApi.Dtos.PostDtos;
 using VVayfarerApi.Entities;
 using VVayfarerApi.Models;
 
@@ -75,12 +76,12 @@ namespace VVayfarerApi.Controllers
 
             var authorizedUserId = User.FindFirst(ClaimTypes.NameIdentifier);
 
-            if (postModelFromRepo.UserId.ToString() != authorizedUserId.Value)
+            if (postModelFromRepo.Entity.UserId.ToString() != authorizedUserId.Value)
             {
                 return Unauthorized();
             }
 
-            var postToPatch = _mapper.Map<PostUpdateDto>(postModelFromRepo.Post);
+            var postToPatch = _mapper.Map<PostUpdateDto>(postModelFromRepo);
             patchDoc.ApplyTo(postToPatch, ModelState);
 
             if (!TryValidateModel(postToPatch))
@@ -88,13 +89,13 @@ namespace VVayfarerApi.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            _mapper.Map(postToPatch, postModelFromRepo.Post);
+            _mapper.Map(postToPatch, postModelFromRepo);
 
             await _uow.PostRepository.UpdatePost(postModelFromRepo);
 
             _uow.SaveChanges();
 
-            return NoContent();
+            return Ok(_mapper.Map<PostReadDto>(postModelFromRepo));
         }
 
         // POST: api/Posts
@@ -120,7 +121,7 @@ namespace VVayfarerApi.Controllers
                 {
                     return BadRequest();
                 }
-                return Ok(_mapper.Map<PostReadDto>(newPost));
+                return Ok(_mapper.Map<EntityAsPostReadDto>(newPost));
             }
 
             return BadRequest(ModelState);  
@@ -144,7 +145,7 @@ namespace VVayfarerApi.Controllers
                 return NotFound();
             }
 
-            if (authorizedUserId.Value != post.UserId.ToString())
+            if (authorizedUserId.Value != post.Entity.UserId.ToString())
             {
                 return Unauthorized();
             }

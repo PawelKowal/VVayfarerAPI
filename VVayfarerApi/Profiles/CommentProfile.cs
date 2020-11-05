@@ -12,7 +12,8 @@ namespace VVayfarerApi.Profiles
     {
         public CommentProfile()
         {
-            CreateMap<Entity, CommentReadDto>();
+            CreateMap<Comment, CommentReadDto>();
+            CreateMap<Entity, EntityAsCommentReadDto>();
             CreateMap<CommentAddDto, Comment>();
             CreateMap<CommentUpdateDto, Comment>();
             CreateMap<Comment, CommentUpdateDto>();

@@ -21,43 +21,43 @@ namespace VVayfarerApi.Repositories
 
         public async Task<Entity> AddPost(Post post, string authorId)
         {
-            var newEntity = new Entity { UserId = Guid.Parse(authorId), Post = post };
-
-            newEntity.PublicationDate = DateTime.Now;
-            newEntity.ReactionsCounter = 0;
+            var newEntity = new Entity { 
+                UserId = Guid.Parse(authorId),
+                PublicationDate = DateTime.Now,
+                ReactionsCounter = 0,
+                Post = post 
+            };
 
             await _context.Entities.AddAsync(newEntity);
 
             return newEntity;
         }
 
-        public Task DeletePost(Entity post)
+        public Task DeletePost(Post post)
         {
-            _context.Entities.Remove(post);
+            _context.Posts.Remove(post);
 
             return Task.CompletedTask;
         }
 
-        public Task<List<Entity>> GetAllPosts()
+        public Task<List<Post>> GetAllPosts()
         {
-                return _context.Entities
-                    .Include(entity => entity.Post)
-                    .ToListAsync();
+            return _context.Posts.Include(p => p.Entity).ToListAsync();
         }
 
-        public ValueTask<Entity> GetPostById(int PostId)
+        public Task<Post> GetPostById(int PostId)
         {
-            return _context.Entities.FindAsync(PostId);
+            return _context.Posts.Include(p => p.Entity).FirstOrDefaultAsync(p => p.EntityId == PostId);
         }
 
-        public Task<List<Entity>> GetUserPosts(Guid UserId)
+        public Task<List<Post>> GetUserPosts(Guid UserId)
         {
-            return _context.Entities.Where(e => e.UserId == UserId && e.Post != null).ToListAsync();
+            return _context.Posts.Include(p => p.Entity).Where(p => p.Entity.UserId == UserId).ToListAsync();
         }
 
-        public Task UpdatePost(Entity post)
+        public Task UpdatePost(Post post)
         {
-            _context.Entities.Update(post);
+            _context.Posts.Update(post);
 
             return Task.CompletedTask;
         }

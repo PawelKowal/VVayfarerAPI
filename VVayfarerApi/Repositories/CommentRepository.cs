@@ -18,43 +18,43 @@ namespace VVayfarerApi.Repositories
         }
         public async Task<Entity> AddComment(Comment comment, string authorId)
         {
-            var newEntity = new Entity { UserId = Guid.Parse(authorId), Comment = comment };
-
-            newEntity.PublicationDate = DateTime.Now;
-            newEntity.ReactionsCounter = 0;
+            var newEntity = new Entity {
+                UserId = Guid.Parse(authorId),
+                PublicationDate = DateTime.Now,
+                ReactionsCounter = 0,
+                Comment = comment
+            };
 
             await _context.Entities.AddAsync(newEntity);
 
             return newEntity;
         }
 
-        public Task DeleteComment(Entity comment)
+        public Task DeleteComment(Comment comment)
         {
-            _context.Entities.Remove(comment);
+            _context.Comments.Remove(comment);
 
             return Task.CompletedTask;
         }
 
-        public ValueTask<Entity> GetCommentById(int CommentId)
+        public Task<Comment> GetCommentById(int CommentId)
         {
-            return _context.Entities.FindAsync(CommentId);
+            return _context.Comments.Include(c => c.Entity).FirstOrDefaultAsync(c => c.EntityId == CommentId);
         }
 
-        public Task<List<Entity>> GetPostComments(int PostId)
+        public Task<List<Comment>> GetEntityComments(int EntityId)
         {
-            var comments = _context.Entities.Where(e => e.Comment != null).Include(e => e.Comment);
-
-            return comments.Where(c => c.Comment.TargetEntityId == PostId).ToListAsync();
+            return _context.Comments.Where(c => c.TargetEntityId == EntityId).Include(c => c.Entity).ToListAsync();
         }
 
-        public Task<List<Entity>> GetUserComments(Guid UserId)
+            public Task<List<Comment>> GetUserComments(Guid UserId)
         {
-            return _context.Entities.Where(e => e.UserId == UserId && e.Comment != null).ToListAsync();
+            return _context.Comments.Include(c => c.Entity).Where(c => c.Entity.UserId == UserId).ToListAsync();
         }
                
-        public Task UpdateComment(Entity comment)
+        public Task UpdateComment(Comment comment)
         {
-            _context.Entities.Update(comment);
+            _context.Comments.Update(comment);
 
             return Task.CompletedTask;
         }

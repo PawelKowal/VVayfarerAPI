@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using VVayfarerApi.Dtos;
+using VVayfarerApi.Dtos.PostDtos;
 using VVayfarerApi.Entities;
 
 namespace VVayfarerApi.Profiles
@@ -12,7 +13,8 @@ namespace VVayfarerApi.Profiles
     {
         public PostProfile()
         {
-            CreateMap<Entity, PostReadDto>();
+            CreateMap<Entity, EntityAsPostReadDto>();
+            CreateMap<Post, PostReadDto>();
             CreateMap<PostAddDto, Post>();
             CreateMap<PostUpdateDto, Post>();
             CreateMap<Post, PostUpdateDto>();

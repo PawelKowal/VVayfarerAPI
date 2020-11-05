@@ -9,11 +9,11 @@ namespace VVayfarerApi.Repositories
     public interface ICommentRepository
     {
         Task<Entity> AddComment(Comment comment, string authorId);
-        ValueTask<Entity> GetCommentById(int CommentId);
-        Task<List<Entity>> GetPostComments(int PostId);
-        Task<List<Entity>> GetUserComments(Guid UserId);
-        Task UpdateComment(Entity comment);
-        Task DeleteComment(Entity comment);
+        Task<Comment> GetCommentById(int CommentId);
+        Task<List<Comment>> GetEntityComments(int PostId);
+        Task<List<Comment>> GetUserComments(Guid UserId);
+        Task UpdateComment(Comment comment);
+        Task DeleteComment(Comment comment);
         Task<bool> IfEntityExists(int id);
     }
 }

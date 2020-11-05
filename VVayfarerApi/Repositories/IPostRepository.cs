@@ -10,11 +10,11 @@ namespace VVayfarerApi.Repositories
 {
     public interface IPostRepository
     {
-        ValueTask<Entity> GetPostById(int PostId);
-        Task<List<Entity>> GetAllPosts();
-        Task<List<Entity>> GetUserPosts(Guid UserId);
+        Task<Post> GetPostById(int PostId);
+        Task<List<Post>> GetAllPosts();
+        Task<List<Post>> GetUserPosts(Guid UserId);
         Task<Entity> AddPost(Post post, string authorId);
-        Task UpdatePost(Entity post);
-        Task DeletePost(Entity post);
+        Task UpdatePost(Post post);
+        Task DeletePost(Post post);
     }
 }

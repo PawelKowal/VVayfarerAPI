@@ -27,6 +27,7 @@ namespace VVayfarerApi.Controllers
 
         //GET api/user
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetLoggedUser()
         {
             var authorizedUserId = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -89,7 +90,7 @@ namespace VVayfarerApi.Controllers
 
             _uow.SaveChanges();
 
-            return NoContent();
+            return Ok(_mapper.Map<UserReadDto>(userModelFromRepo));
         }
 
         //GET /api/user/all

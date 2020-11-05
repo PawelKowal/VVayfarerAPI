@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using VVayfarerApi.Data;
 using VVayfarerApi.Dtos;
 using VVayfarerApi.Entities;
@@ -27,17 +28,17 @@ namespace VVayfarerApi.Controllers
             _mapper = mapper;
         }
 
-        // GET: api/Comments/Post
-        [HttpGet("post/{id}")]
+        // GET: api/Comments/entity-comments/{id}
+        [HttpGet("entity-comments/{id}")]
         public async Task<ActionResult<IEnumerable<Comment>>> GetPostComments(int id)
         {
-            var comments = await _uow.CommentRepository.GetPostComments(id);
+            var comments = await _uow.CommentRepository.GetEntityComments(id);
 
             return Ok(_mapper.Map<IEnumerable<CommentReadDto>>(comments));
         }
 
-        // GET: api/Comments/User
-        [HttpGet("user/{id}")]
+        // GET: api/Comments/User-comments/{id}
+        [HttpGet("user-comments/{id}")]
         public async Task<ActionResult<IEnumerable<Comment>>> GetUserComments(Guid id)
         {
             var comments = await _uow.CommentRepository.GetUserComments(id);
@@ -73,12 +74,12 @@ namespace VVayfarerApi.Controllers
 
             var authorizedUserId = User.FindFirst(ClaimTypes.NameIdentifier);
 
-            if (commentModelFromRepo.UserId.ToString() != authorizedUserId.Value)
+            if (commentModelFromRepo.Entity.UserId.ToString() != authorizedUserId.Value)
             {
                 return Unauthorized();
             }
 
-            var commentToPatch = _mapper.Map<CommentUpdateDto>(commentModelFromRepo.Comment);
+            var commentToPatch = _mapper.Map<CommentUpdateDto>(commentModelFromRepo);
             patchDoc.ApplyTo(commentToPatch, ModelState);
 
             if (!TryValidateModel(commentToPatch))
@@ -86,13 +87,14 @@ namespace VVayfarerApi.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            _mapper.Map(commentToPatch, commentModelFromRepo.Comment);
+            _mapper.Map(commentToPatch, commentModelFromRepo);
 
             await _uow.CommentRepository.UpdateComment(commentModelFromRepo);
 
             _uow.SaveChanges();
 
-            return NoContent();
+            //return NoContent();
+            return Ok(_mapper.Map<CommentReadDto>(commentModelFromRepo));
         }
 
         // POST: api/Comments
@@ -123,7 +125,7 @@ namespace VVayfarerApi.Controllers
                 {
                     return BadRequest();
                 }
-                return Ok(_mapper.Map<CommentReadDto>(newComment));
+                return Ok(_mapper.Map<EntityAsCommentReadDto>(newComment));
             }
 
             return BadRequest(ModelState);
@@ -147,7 +149,7 @@ namespace VVayfarerApi.Controllers
                 return NotFound();
             }
 
-            if (authorizedUserId.Value != comment.UserId.ToString())
+            if (authorizedUserId.Value != comment.Entity.UserId.ToString())
             {
                 return Unauthorized();
             }
