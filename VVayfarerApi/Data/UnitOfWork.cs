@@ -14,6 +14,7 @@ namespace VVayfarerApi.Data
         private IUserRepository _userRepo;
         private IPostRepository _postRepo;
         private ICommentRepository _commentRepo;
+        private IReactionRepository _reactionRepo;
         private VVayfarerDbContext _context;
         private UserManager<User> _userManager;
         private IConfiguration _configuration;
@@ -52,6 +53,16 @@ namespace VVayfarerApi.Data
                 if (_commentRepo == null)
                     _commentRepo = new CommentRepository(_context);
                 return _commentRepo;
+            }
+        }
+
+        public IReactionRepository ReactionRepository
+        {
+            get
+            {
+                if (_reactionRepo == null)
+                    _reactionRepo = new ReactionRepository(_context);
+                return _reactionRepo;
             }
         }
 

@@ -11,6 +11,7 @@ namespace VVayfarerApi.Data
         IUserRepository UserRepository { get; }
         IPostRepository PostRepository { get; }
         ICommentRepository CommentRepository { get; }
+        IReactionRepository ReactionRepository { get; }
         void SaveChanges();
     }
 }
